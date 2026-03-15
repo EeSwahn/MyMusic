@@ -114,6 +114,13 @@ interface NeteaseApiService {
         @Field("params") params: String,
         @Field("encSecKey") encSecKey: String
     ): Response<LyricResponse>
+
+    @FormUrlEncoded
+    @POST
+    suspend fun getLyricEapi(
+        @Url url: String = "https://interface3.music.163.com/eapi/song/lyric/v1",
+        @Field("params") params: String
+    ): Response<LyricResponse>
 }
 
 data class SongDetailResponse(

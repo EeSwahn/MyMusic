@@ -45,9 +45,17 @@ class LyricsViewModel : ViewModel() {
         viewModelScope.launch {
             when (val result = repository.getLyric(songId)) {
                 is Result.Success -> {
+                    val yrcText   = result.data.yrc?.lyric    ?: ""
+                    val klyric    = result.data.klyric?.lyric ?: ""
                     val lrcText   = result.data.lrc?.lyric    ?: ""
                     val transText = result.data.tlyric?.lyric ?: ""
-                    val lines = parseLrc(lrcText, transText)
+                    
+                    val lines = when {
+                        yrcText.isNotBlank() -> parseYrc(yrcText, transText)
+                        klyric.isNotBlank() -> parseYrc(klyric, transText)
+                        else -> parseLrc(lrcText, transText)
+                    }
+                    
                     if (lines.isEmpty()) {
                         _state.value = LyricsUiState(hasNoLyric = true)
                     } else {
@@ -129,6 +137,8 @@ private val TIME_PATTERN = Regex("""\[(\d{2}):(\d{2})\.(\d{2,3})\]""")
 
 private fun parseToMap(text: String): Map<Long, String> {
     val map = mutableMapOf<Long, String>()
+    if (text.isBlank()) return map
+    
     for (line in text.lines()) {
         val trimmed = line.trim()
         val timestamps = TIME_PATTERN.findAll(trimmed).map { m ->
@@ -138,7 +148,18 @@ private fun parseToMap(text: String): Map<Long, String> {
             val ms = if (msRaw.length == 3) msRaw.toLong() else msRaw.toLong() * 10L
             min * 60_000L + sec * 1_000L + ms
         }.toList()
-        if (timestamps.isEmpty()) continue
+        
+        if (timestamps.isEmpty()) {
+            val msTimestampMatch = Regex("""\[(\d+)(?:,\d+)?\]""").find(trimmed)
+            if (msTimestampMatch != null) {
+                val ms = msTimestampMatch.groupValues[1].toLong()
+                val content = trimmed.substring(msTimestampMatch.range.last + 1).trim()
+                if (content.isNotBlank()) {
+                    map[ms] = content
+                }
+            }
+            continue
+        }
         val content = trimmed.replace(TIME_PATTERN, "").trim()
         if (content.isBlank()) continue
         timestamps.forEach { map[it] = content }
@@ -149,9 +170,88 @@ private fun parseToMap(text: String): Map<Long, String> {
 fun parseLrc(lrcText: String, transText: String = ""): List<LyricLine> {
     val main  = parseToMap(lrcText)
     val trans = parseToMap(transText)
-    return main.entries
-        .map { (time, text) -> LyricLine(time, text, trans[time]) }
-        .sortedBy { it.timeMs }
+    
+    val baseLines = main.map { (time, text) -> 
+        LyricLine(
+            timeMs = time,
+            text = text,
+            translation = trans[time]
+        )
+    }.sortedBy { it.timeMs }
+
+    return baseLines.mapIndexed { index, line ->
+        val duration = if (index < baseLines.size - 1) {
+            baseLines[index + 1].timeMs - line.timeMs
+        } else {
+            3000L // 最后一行默认 3s
+        }
+        line.copy(durationMs = duration)
+    }
+}
+
+// ─── YRC 解析 ──────────────────────────────────────────────────────────────
+
+fun parseYrc(yrcText: String, transText: String = ""): List<LyricLine> {
+    val trans = parseToMap(transText)
+    val lines = mutableListOf<LyricLine>()
+    
+    // 匹配 [开始时间,持续时间] 内容
+    val lineRegex = Regex("""^\[(\d+),(\d+)\](.*)""")
+    // 匹配字标签: (偏移,持续,其它) 或 <偏移,持续,其它>
+    val wordTagRegex = Regex("""[<(](\d+),(\d+),\d+[>)]""")
+
+    for (rawLine in yrcText.lines()) {
+        val trimmed = rawLine.trim()
+        if (trimmed.isEmpty() || trimmed.startsWith("[")) {
+            // 处理行头 [开始时间,持续时间]
+            val match = lineRegex.matchEntire(trimmed)
+            if (match != null) {
+                val startTime = match.groupValues[1].toLong()
+                val duration = match.groupValues[2].toLong()
+                val contentPart = match.groupValues[3]
+                
+                val words = mutableListOf<com.example.mymusic.data.model.WordInfo>()
+                val fullText = StringBuilder()
+                
+                val wordMatches = wordTagRegex.findAll(contentPart).toList()
+                if (wordMatches.isNotEmpty()) {
+                    for (i in wordMatches.indices) {
+                         val m = wordMatches[i]
+                         val startOff = m.groupValues[1].toInt()
+                         val dur = m.groupValues[2].toInt()
+                         
+                         val textStart = m.range.last + 1
+                         val textEnd = if (i + 1 < wordMatches.size) wordMatches[i+1].range.first else contentPart.length
+                         val wordText = contentPart.substring(textStart, textEnd)
+                         
+                         words.add(com.example.mymusic.data.model.WordInfo(startOff, dur, wordText))
+                         fullText.append(wordText)
+                    }
+                    
+                    lines.add(LyricLine(
+                        timeMs = startTime,
+                        text = fullText.toString(),
+                        translation = trans[startTime],
+                        durationMs = duration,
+                        words = words
+                    ))
+                } else {
+                    // 如果有行头但没字标签，可能是逐行 YRC
+                    val cleanText = contentPart.replace(Regex("""[<(].*?[>)]"""), "").trim()
+                    if (cleanText.isNotBlank()) {
+                         lines.add(LyricLine(
+                            timeMs = startTime,
+                            text = cleanText,
+                            translation = trans[startTime],
+                            durationMs = duration
+                        ))
+                    }
+                }
+            }
+        }
+    }
+    
+    return if (lines.isEmpty()) parseLrc(yrcText, transText) else lines
 }
 
 // ─── 内置测试歌词：蔡依林《说爱你》 ─────────────────────────────────────────

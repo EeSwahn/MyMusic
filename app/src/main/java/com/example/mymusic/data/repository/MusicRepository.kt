@@ -354,14 +354,21 @@ class MusicRepository {
     suspend fun getLyric(songId: Long): Result<LyricResponse> =
         withContext(Dispatchers.IO) {
             try {
+                // 使用 EAPI 并模拟 Android 身份以获取 YRC (逐字) 歌词
                 val data = mapOf(
                     "id" to songId.toString(),
                     "lv" to -1,
                     "kv" to -1,
-                    "tv" to -1
+                    "tv" to -1,
+                    "yrc" to true // 显式请求逐字歌词
                 )
-                val enc = weapi(data)
-                val response = api.getLyric(enc["params"]!!, enc["encSecKey"]!!)
+                val jsonStr = gson.toJson(data)
+                val params = NeteaseCrypto.encryptEapi(
+                    url = "/api/song/lyric/v1",
+                    dataJson = jsonStr
+                )
+                
+                val response = api.getLyricEapi(params = params)
                 if (response.isSuccessful) {
                     val body = response.body()
                     if (body != null) Result.Success(body)

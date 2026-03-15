@@ -11,6 +11,7 @@ import androidx.compose.foundation.gestures.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.*
 import androidx.compose.foundation.shape.*
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -162,10 +163,10 @@ private fun TabletLyricsLayout(
     animationConfig: LyricsAnimationConfig
 ) {
     val song = currentSong ?: return
-    var verticalScrollSpeed by rememberFloatPreference("verticalScrollSpeed", 1.0f)
-    var scaleAnimationSpeed by rememberFloatPreference("scaleAnimationSpeed", 1.0f)
-    var activeLyricSizeRatio by rememberFloatPreference("activeLyricSizeRatio", 1.0f)
-    var baseFontSizeRatio by rememberFloatPreference("baseFontSizeRatio", 1.0f)
+    var verticalScrollSpeed by rememberFloatPreference("verticalScrollSpeed", 0.5f)
+    var scaleAnimationSpeed by rememberFloatPreference("scaleAnimationSpeed", 0.5f)
+    var activeLyricSizeRatio by rememberFloatPreference("activeLyricSizeRatio", 0.7f)
+    var baseFontSizeRatio by rememberFloatPreference("baseFontSizeRatio", 1.3f)
     var lineSpacingRatio by rememberFloatPreference("lineSpacingRatio", 0.7f)
     var showSettings by remember { mutableStateOf(false) }
 
@@ -187,6 +188,12 @@ private fun TabletLyricsLayout(
     var progressBarWidthRatio by rememberFloatPreference("progressBarWidthRatio", 1.0f)
     var progressBarHeight by rememberFloatPreference("progressBarHeight", 4.0f)
     var progressBarThumbSize by rememberFloatPreference("progressBarThumbSize", 20.0f)
+
+    var enableWordByWord by rememberBooleanPreference("enableWordByWord", true)
+    var yrcFloatSpeed by rememberFloatPreference("yrcFloatSpeed", 1.0f)
+    var yrcFloatIntensity by rememberFloatPreference("yrcFloatIntensity", 12f)
+    var wordScaleSpeed by rememberFloatPreference("wordScaleSpeed", 1.0f)
+    var wordScaleSize by rememberFloatPreference("wordScaleSize", 1.3f)
 
     Row(
         modifier = Modifier
@@ -288,7 +295,9 @@ private fun TabletLyricsLayout(
                 BottomActionButtons(
                     isPhone = false,
                     modifier = Modifier.offset(x = bottomOffsetX.dp, y = bottomOffsetY.dp),
-                    onSettingsClick = { showSettings = !showSettings }
+                    onSettingsClick = { showSettings = !showSettings },
+                    enableWordByWord = enableWordByWord,
+                    onWordByWordChange = { enableWordByWord = it }
                 )
             }
         }
@@ -316,7 +325,12 @@ private fun TabletLyricsLayout(
                         scaleAnimationSpeed = scaleAnimationSpeed,
                         activeLyricSizeRatio = activeLyricSizeRatio,
                         baseFontSizeRatio = baseFontSizeRatio,
-                        lineSpacingRatio = lineSpacingRatio
+                        lineSpacingRatio = lineSpacingRatio,
+                        enableWordByWord = enableWordByWord,
+                        yrcFloatSpeed = yrcFloatSpeed,
+                        yrcFloatIntensity = yrcFloatIntensity,
+                        wordScaleSpeed = wordScaleSpeed,
+                        wordScaleSize = wordScaleSize
                     )
                 }
                 
@@ -349,6 +363,7 @@ private fun TabletLyricsLayout(
                         SettingSliderRow("居中放大", activeLyricSizeRatio, { activeLyricSizeRatio = it }, 0.1f..1.0f, 8)
                         SettingSliderRow("所有字号", baseFontSizeRatio, { baseFontSizeRatio = it }, 0.5f..2.0f, 15)
                         SettingSliderRow("歌词行距", lineSpacingRatio, { lineSpacingRatio = it }, 0.5f..3.0f, 25)
+                        SettingSliderRow("上浮速度", yrcFloatSpeed, { yrcFloatSpeed = it }, 0.1f..2.0f, 18)
                         SettingSliderRow("标题X", headerOffsetX, { headerOffsetX = it }, -200f..200f, 0)
                         SettingSliderRow("标题Y", headerOffsetY, { headerOffsetY = it }, -200f..200f, 0)
                         SettingSliderRow("封面X", coverOffsetX, { coverOffsetX = it }, -200f..200f, 0)
@@ -364,6 +379,9 @@ private fun TabletLyricsLayout(
                         SettingSliderRow("进度条X", progressBarOffsetX, { progressBarOffsetX = it }, -200f..200f, 0)
                         SettingSliderRow("进度条Y", progressBarOffsetY, { progressBarOffsetY = it }, -200f..200f, 0)
                         SettingSliderRow("进度条宽", progressBarWidthRatio, { progressBarWidthRatio = it }, 0.3f..2.0f, 17)
+                        SettingSliderRow("上浮位移", yrcFloatIntensity, { yrcFloatIntensity = it }, 0f..50f, 0)
+                        SettingSliderRow("缩放速度", wordScaleSpeed, { wordScaleSpeed = it }, 0.1f..2.0f, 10)
+                        SettingSliderRow("缩放大小", wordScaleSize, { wordScaleSize = it }, 1.0f..2.0f, 13)
                     }
                 }
             }
@@ -380,11 +398,16 @@ private fun PhoneLyricsLayout(
     animationConfig: LyricsAnimationConfig
 ) {
     val song = currentSong ?: return
-    var verticalScrollSpeed by rememberFloatPreference("verticalScrollSpeed", 1.0f)
-    var scaleAnimationSpeed by rememberFloatPreference("scaleAnimationSpeed", 1.0f)
-    var activeLyricSizeRatio by rememberFloatPreference("activeLyricSizeRatio", 1.0f)
-    var baseFontSizeRatio by rememberFloatPreference("baseFontSizeRatio", 1.0f)
+    var verticalScrollSpeed by rememberFloatPreference("verticalScrollSpeed", 0.5f)
+    var scaleAnimationSpeed by rememberFloatPreference("scaleAnimationSpeed", 0.5f)
+    var activeLyricSizeRatio by rememberFloatPreference("activeLyricSizeRatio", 0.7f)
+    var baseFontSizeRatio by rememberFloatPreference("baseFontSizeRatio", 1.3f)
     var lineSpacingRatio by rememberFloatPreference("lineSpacingRatio", 0.7f)
+    var enableWordByWord by rememberBooleanPreference("enableWordByWord", true)
+    var yrcFloatSpeed by rememberFloatPreference("yrcFloatSpeed", 1.0f)
+    var yrcFloatIntensity by rememberFloatPreference("yrcFloatIntensity", 12f)
+    var wordScaleSpeed by rememberFloatPreference("wordScaleSpeed", 1.0f)
+    var wordScaleSize by rememberFloatPreference("wordScaleSize", 1.3f)
     var showSettings by remember { mutableStateOf(false) }
 
     // 是否显示歌词视图（初始为 false，即封面视图）
@@ -472,7 +495,12 @@ private fun PhoneLyricsLayout(
                                 scaleAnimationSpeed = scaleAnimationSpeed,
                                 activeLyricSizeRatio = activeLyricSizeRatio,
                                 baseFontSizeRatio = baseFontSizeRatio,
-                                lineSpacingRatio = lineSpacingRatio
+                                lineSpacingRatio = lineSpacingRatio,
+                                enableWordByWord = enableWordByWord,
+                                yrcFloatSpeed = yrcFloatSpeed,
+                                yrcFloatIntensity = yrcFloatIntensity,
+                                wordScaleSpeed = wordScaleSpeed,
+                                wordScaleSize = wordScaleSize
                             )
                         }
                         
@@ -573,6 +601,8 @@ private fun PhoneLyricsLayout(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .heightIn(max = 250.dp)
+                    .verticalScroll(rememberScrollState())
                     .padding(horizontal = 16.dp),
                 verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
@@ -581,6 +611,10 @@ private fun PhoneLyricsLayout(
                 SettingSliderRow("居中放大", activeLyricSizeRatio, { activeLyricSizeRatio = it }, 0.1f..1.0f, 8)
                 SettingSliderRow("所有字号", baseFontSizeRatio, { baseFontSizeRatio = it }, 0.5f..2.0f, 15)
                 SettingSliderRow("歌词行距", lineSpacingRatio, { lineSpacingRatio = it }, 0.5f..3.0f, 25)
+                SettingSliderRow("上浮速度", yrcFloatSpeed, { yrcFloatSpeed = it }, 0.1f..2.0f, 18)
+                SettingSliderRow("上浮位移", yrcFloatIntensity, { yrcFloatIntensity = it }, 0f..50f, 0)
+                SettingSliderRow("缩放速度", wordScaleSpeed, { wordScaleSpeed = it }, 0.1f..2.0f, 10)
+                SettingSliderRow("缩放大小", wordScaleSize, { wordScaleSize = it }, 1.0f..2.0f, 13)
             }
         }
 
@@ -594,7 +628,9 @@ private fun PhoneLyricsLayout(
         // 底部动作栏
         BottomActionButtons(
             isPhone = true,
-            onSettingsClick = { showSettings = !showSettings }
+            onSettingsClick = { showSettings = !showSettings },
+            enableWordByWord = enableWordByWord,
+            onWordByWordChange = { enableWordByWord = it }
         )
     }
 }
@@ -707,7 +743,12 @@ private fun LyricsPanel(
     scaleAnimationSpeed: Float = 1.0f,
     activeLyricSizeRatio: Float = 1.0f,
     baseFontSizeRatio: Float = 1.0f,
-    lineSpacingRatio: Float = 0.7f
+    lineSpacingRatio: Float = 0.7f,
+    enableWordByWord: Boolean = false,
+    yrcFloatSpeed: Float = 1.0f,
+    yrcFloatIntensity: Float = 12f,
+    wordScaleSpeed: Float = 1.0f,
+    wordScaleSize: Float = 1.3f
 ) {
     val listState = rememberLazyListState()
     LaunchedEffect(lyricsState.currentLineIndex) {
@@ -791,7 +832,12 @@ private fun LyricsPanel(
                         onClick = {
                             MusicPlayer.seekTo(line.timeMs)
                         },
-                        isPhone = isPhone
+                        isPhone = isPhone,
+                        enableWordByWord = enableWordByWord,
+                        yrcFloatSpeed = yrcFloatSpeed,
+                        yrcFloatIntensity = yrcFloatIntensity,
+                        wordScaleSpeed = wordScaleSpeed,
+                        wordScaleSize = wordScaleSize
                     )
                 }
             }
@@ -799,6 +845,7 @@ private fun LyricsPanel(
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun LyricLineItem(
     line: com.example.mymusic.data.model.LyricLine,
@@ -809,11 +856,17 @@ private fun LyricLineItem(
     baseFontSizeRatio: Float = 1.0f,
     lineSpacingRatio: Float = 0.7f,
     onClick: () -> Unit,
-    isPhone: Boolean = false
+    isPhone: Boolean = false,
+    enableWordByWord: Boolean = false,
+    yrcFloatSpeed: Float = 1.0f,
+    yrcFloatIntensity: Float = 12f,
+    wordScaleSpeed: Float = 1.0f,
+    wordScaleSize: Float = 1.3f
 ) {
     val isPlaying by remember {
         MusicPlayer.playerState.map { it.isPlaying }.distinctUntilChanged()
     }.collectAsState(initial = MusicPlayer.playerState.value.isPlaying)
+    val playerState by MusicPlayer.playerState.collectAsState()
     val animationConfig = rememberLyricsAnimationConfig()
     
     var isPressed by remember { mutableStateOf(false) }
@@ -834,8 +887,8 @@ private fun LyricLineItem(
         label = "scale"
     )
     
-    val fontSize = baseFontSizeRatio * baseActiveFontSize
-    val lineHeight = baseFontSizeRatio * baseActiveLineHeight
+    val fontSize = (baseFontSizeRatio * baseActiveFontSize).coerceIn(8f, 72f)
+    val lineHeight = (baseFontSizeRatio * baseActiveLineHeight).coerceIn(12f, 96f)
     
     val targetAlpha = if (isCurrent) 1f else 0.3f
     val alpha by animateFloatAsState(
@@ -843,8 +896,6 @@ private fun LyricLineItem(
         animationSpec = tween(durationMillis = animationDuration, easing = FastOutSlowInEasing),
         label = "alpha"
     )
-    
-    // Removed font layout animation. Hardware acceleration handling scaling below.
     
     val textColor by animateColorAsState(
         targetValue = if (isCurrent) Color.White else TextSecondary,
@@ -901,15 +952,113 @@ private fun LyricLineItem(
                 this.transformOrigin = if (isPhone) TransformOrigin(0.5f, 0.5f) else TransformOrigin(0f, 0.5f)
             }
     ) {
-        Text(
-            text = line.text,
-            color = textColor,
-            fontSize = fontSize.sp,
-            fontWeight = FontWeight.Bold,
-            textAlign = if (isPhone) TextAlign.Center else TextAlign.Start,
-            lineHeight = lineHeight.sp,
-            modifier = Modifier.padding(vertical = 4.dp * lineSpacingRatio)
-        )
+        if (isCurrent && enableWordByWord) {
+            val wordsToUse by remember(line.text, line.durationMs, line.words) {
+                mutableStateOf(line.words ?: generateWordInfoForLine(line))
+            }
+            
+            if (wordsToUse.isNotEmpty() && wordsToUse.size <= 50) {
+                val maxFloatOffset = yrcFloatIntensity * 1.5f * yrcFloatSpeed
+                Row(
+                    modifier = Modifier
+                        .padding(vertical = 4.dp * lineSpacingRatio)
+                        .padding(top = (maxFloatOffset / 2).dp),
+                    horizontalArrangement = if (isPhone) Arrangement.Center else Arrangement.Start,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    wordsToUse.forEachIndexed { index, word ->
+                        val wordStart = line.timeMs + word.startOffset.toLong()
+                        val wordEnd = wordStart + word.duration.toLong()
+                        val isActive = playerState.currentPosition in wordStart until wordEnd
+                        val isPassed = playerState.currentPosition >= wordEnd
+                        
+                        val isBeforeLine = playerState.currentPosition < line.timeMs
+                        val targetAlpha = if (isBeforeLine) 1.0f else if (isActive || isPassed) 1.0f else 0.35f
+                        val targetScale = if (isBeforeLine) 1.0f else if (isActive || isPassed) wordScaleSize else 1.0f
+                        val targetTranslationY = if (isBeforeLine) 0f else if (isActive || isPassed) -yrcFloatIntensity * 1.5f * yrcFloatSpeed else 0f
+                        val targetColor = Color.White
+                        
+                        val scaleDuration = (200 / wordScaleSpeed).toInt().coerceAtLeast(50)
+                        
+                        val wordAlpha by animateFloatAsState(
+                            targetValue = targetAlpha,
+                            animationSpec = tween(durationMillis = (150 / wordScaleSpeed).toInt().coerceAtLeast(50), easing = FastOutSlowInEasing),
+                            label = "wa_${line.timeMs}_${index}"
+                        )
+                        
+                        val wordScale by animateFloatAsState(
+                            targetValue = targetScale,
+                            animationSpec = tween(durationMillis = scaleDuration, easing = FastOutSlowInEasing),
+                            label = "ws_${line.timeMs}_${index}"
+                        )
+                        
+                        val wordTranslationY by animateFloatAsState(
+                            targetValue = targetTranslationY,
+                            animationSpec = tween(durationMillis = scaleDuration, easing = LinearOutSlowInEasing),
+                            label = "wt_${line.timeMs}_${index}"
+                        )
+                        
+                        val wordColor by animateColorAsState(
+                            targetValue = targetColor,
+                            animationSpec = tween(durationMillis = (150 / wordScaleSpeed).toInt().coerceAtLeast(50)),
+                            label = "wc_${line.timeMs}_${index}"
+                        )
+                        
+                        Text(
+                            text = word.text,
+                            color = wordColor,
+                            fontSize = fontSize.sp,
+                            fontWeight = FontWeight.Bold,
+                            lineHeight = lineHeight.sp,
+                            modifier = Modifier
+                                .alpha(wordAlpha)
+                                .graphicsLayer {
+                                    scaleX = wordScale
+                                    scaleY = wordScale
+                                    translationY = wordTranslationY
+                                }
+                        )
+                    }
+                }
+            } else {
+                val progress = if (isCurrent) {
+                    getDetailedLyricsProgress(playerState.currentPosition, line)
+                } else 0f
+
+                Text(
+                    text = line.text,
+                    style = if (isCurrent) {
+                        LocalTextStyle.current.copy(
+                            brush = Brush.horizontalGradient(
+                                0.0f to Color.White,
+                                progress to Color.White,
+                                progress + 0.001f to Color.White.copy(alpha = 0.35f),
+                                1.0f to Color.White.copy(alpha = 0.35f)
+                            )
+                        )
+                    } else {
+                        LocalTextStyle.current.copy(color = textColor)
+                    },
+                    fontSize = fontSize.sp,
+                    fontWeight = FontWeight.Bold,
+                    textAlign = if (isPhone) TextAlign.Center else TextAlign.Start,
+                    lineHeight = lineHeight.sp,
+                    modifier = Modifier.padding(vertical = 4.dp * lineSpacingRatio)
+                )
+            }
+        } else {
+            val progress = if (isCurrent) 1f else 0f
+
+            Text(
+                text = line.text,
+                color = textColor,
+                fontSize = fontSize.sp,
+                fontWeight = FontWeight.Bold,
+                textAlign = if (isPhone) TextAlign.Center else TextAlign.Start,
+                lineHeight = lineHeight.sp,
+                modifier = Modifier.padding(vertical = 4.dp * lineSpacingRatio)
+            )
+        }
 
         line.translation?.let { translation ->
             if (isCurrent) {
@@ -1123,8 +1272,12 @@ private fun PlaybackControls(
 private fun BottomActionButtons(
     isPhone: Boolean = false,
     modifier: Modifier = Modifier,
+    enableWordByWord: Boolean = false,
+    onWordByWordChange: (Boolean) -> Unit = {},
     onSettingsClick: () -> Unit
 ) {
+    var showMoreMenu by remember { mutableStateOf(false) }
+
     Row(
         modifier = modifier
             .fillMaxWidth()
@@ -1133,11 +1286,48 @@ private fun BottomActionButtons(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        ActionButton(Icons.Default.Repeat, "循环模式", isPhone)
-        ActionButton(Icons.Default.Timer, "定时关闭", isPhone)
-        ActionButton(Icons.Default.Tune, "设置", isPhone, onClick = onSettingsClick)
-        ActionButton(Icons.Default.List, "播放列表", isPhone)
-        ActionButton(Icons.Default.MoreHoriz, "更多", isPhone)
+        ActionButton(Icons.Default.Repeat, "循环模式", isPhone) // 1. 循环模式按钮
+        ActionButton(Icons.Default.Timer, "定时关闭", isPhone) // 2. 定时关闭按钮
+        ActionButton(Icons.Default.Tune, "设置", isPhone, onClick = onSettingsClick) // 3. 设置按钮（弹出控制滑块区域）
+        ActionButton(Icons.Default.List, "播放列表", isPhone) // 4. 播放列表按钮
+        
+        Box(modifier = Modifier.wrapContentSize(Alignment.TopEnd)) {
+            ActionButton(
+                Icons.Default.MoreHoriz, 
+                "更多", 
+                isPhone, 
+                onClick = { showMoreMenu = true }
+            ) // 5. 更多功能按钮
+            
+            DropdownMenu(
+                expanded = showMoreMenu,
+                onDismissRequest = { showMoreMenu = false },
+                modifier = Modifier.background(DarkCard),
+                properties = androidx.compose.ui.window.PopupProperties(focusable = true)
+            ) {
+                DropdownMenuItem(
+                    text = { Text("更多选项", color = TextPrimary) },
+                    onClick = { showMoreMenu = false }
+                )
+                DropdownMenuItem(
+                    text = { Text("逐字歌词", color = TextPrimary) },
+                    onClick = { 
+                        onWordByWordChange(!enableWordByWord)
+                        showMoreMenu = false 
+                    },
+                    trailingIcon = {
+                        Switch(
+                            checked = enableWordByWord,
+                            onCheckedChange = null,
+                            colors = SwitchDefaults.colors(
+                                checkedThumbColor = NeteaseRed,
+                                checkedTrackColor = NeteaseRed.copy(alpha = 0.5f)
+                            )
+                        )
+                    }
+                )
+            }
+        }
     }
 }
 
@@ -1328,6 +1518,59 @@ private fun ActionButton(
     }
 }
 
+private fun getDetailedLyricsProgress(currentPosition: Long, line: com.example.mymusic.data.model.LyricLine): Float {
+    if (line.words == null || line.words.isEmpty()) {
+        return ((currentPosition - line.timeMs).toFloat() / line.durationMs.coerceAtLeast(1L)).coerceIn(0f, 1f)
+    }
+    
+    val relativePos = (currentPosition - line.timeMs).toInt()
+    if (relativePos <= 0) return 0f
+    
+    val words = line.words
+    val totalChars = line.text.length
+    if (totalChars == 0) return 0f
+    
+    var charsProcessed = 0
+    for (word in words) {
+        val wordEnd = word.startOffset + word.duration
+        if (relativePos < word.startOffset) {
+            return charsProcessed.toFloat() / totalChars
+        }
+        if (relativePos < wordEnd) {
+            val wordFactor = (relativePos - word.startOffset).toFloat() / word.duration.coerceAtLeast(1)
+            val currentChars = charsProcessed + (word.text.length * wordFactor)
+            return (currentChars / totalChars).coerceIn(0f, 1f)
+        }
+        charsProcessed += word.text.length
+    }
+    return 1f
+}
+
+private fun generateWordInfoForLine(line: com.example.mymusic.data.model.LyricLine): List<com.example.mymusic.data.model.WordInfo> {
+    val text = line.text
+    if (text.isEmpty()) return emptyList()
+    
+    val totalDuration = line.durationMs.coerceAtLeast(100L).toInt()
+    val charCount = text.length.coerceAtLeast(1)
+    val durationPerChar = (totalDuration / charCount).coerceAtLeast(10)
+    
+    val result = mutableListOf<com.example.mymusic.data.model.WordInfo>()
+    var currentOffset = 0
+    
+    text.forEachIndexed { index, char ->
+        result.add(
+            com.example.mymusic.data.model.WordInfo(
+                startOffset = currentOffset,
+                duration = durationPerChar,
+                text = char.toString()
+            )
+        )
+        currentOffset += durationPerChar
+    }
+    
+    return result
+}
+
 private fun formatTime(ms: Long): String {
     val totalSeconds = ms / 1000
     val minutes = totalSeconds / 60
@@ -1361,6 +1604,27 @@ private fun rememberFloatPreference(key: String, defaultValue: Float): MutableSt
                 }
             override fun component1() = state.value
             override fun component2(): (Float) -> Unit = { v: Float -> value = v }
+        }
+    }
+}
+
+@Composable
+private fun rememberBooleanPreference(key: String, defaultValue: Boolean): MutableState<Boolean> {
+    val context = LocalContext.current
+    val prefs = remember { context.getSharedPreferences("lyrics_settings", Context.MODE_PRIVATE) }
+    
+    val state = remember { mutableStateOf(prefs.getBoolean(key, defaultValue)) }
+    
+    return remember {
+        object : MutableState<Boolean> {
+            override var value: Boolean
+                get() = state.value
+                set(v) {
+                    state.value = v
+                    prefs.edit().putBoolean(key, v).apply()
+                }
+            override fun component1() = state.value
+            override fun component2(): (Boolean) -> Unit = { v: Boolean -> value = v }
         }
     }
 }

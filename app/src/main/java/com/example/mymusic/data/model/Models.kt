@@ -162,7 +162,10 @@ data class RecommendSongsData(
 data class LyricResponse(
     val code: Int,
     val lrc: LrcContent? = null,
-    val tlyric: LrcContent? = null
+    val tlyric: LrcContent? = null,
+    val yrc: LrcContent? = null,
+    val romalrc: LrcContent? = null,
+    val klyric: LrcContent? = null
 )
 
 data class LrcContent(
@@ -172,5 +175,13 @@ data class LrcContent(
 data class LyricLine(
     val timeMs: Long,
     val text: String,
-    val translation: String? = null
+    val translation: String? = null,
+    val durationMs: Long = 2000L,
+    val words: List<WordInfo>? = null
+)
+
+data class WordInfo(
+    val startOffset: Int,
+    val duration: Int,
+    val text: String
 )
