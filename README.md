@@ -2,6 +2,7 @@ BetterNCM-Android
 > 基于 BetterNCM 灵感开发的 Android 第三方练习项目，专注于流畅的歌词交互体验。
 > 
 本项目是一个出于个人兴趣开发的网易云音乐第三方 Android 客户端（练习作）。在借鉴了 BetterNCM 设计理念的基础上，尝试在移动端实现更丝滑、更高清的动态歌词展示效果。本仓库是受 BetterNCM 启发而开发的 Android 练习项目，与 BetterNCM 官方团队无隶属关系。
+
 🌟 核心功能
  * 逐字随心唱支持
    * 深入探索并接入了网易云“随心唱”接口数据，实现了高精度的逐字同步效果，让歌词律动更贴合人声。
@@ -15,6 +16,7 @@ BetterNCM-Android
  * 版权声明： 本项目所使用的“网易云音乐”相关 API、Logo 及素材版权归网易公司所有。
  * 非营利性： 项目仅供个人学习和研究使用，严禁用于任何商业目的。
  * 维护状态： 作者目前正全力准备国家电网考试，精力有限。如果你在使用中遇到 Bug 或有更好的优化建议，非常欢迎提交 Pull Request，期待与更多同好共同完善。
+   
 📦 下载体验
 请前往 [Releases] 页面获取最新的测试版 APK。
 <img width="2941" height="1759" alt="Screenshot_20260319-222723" src="https://github.com/user-attachments/assets/a9820142-8345-452f-b924-1cf325ab19de" />
