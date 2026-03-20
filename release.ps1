@@ -11,7 +11,7 @@ $KEYSTORE_PATH = "app/release-key.jks"
 $KEYSTORE_PASS = "android"
 $KEY_ALIAS = "my-key-alias"
 $KEY_PASS = "android"
-$REPO = "EeSwahn/MyMusic"
+$REPO = "EeSwahn/BetterNCM-Android"
 
 # 2. Get Version Name from app/build.gradle.kts
 Write-Host "Fetching version information..." -ForegroundColor Cyan
@@ -63,7 +63,7 @@ if ($releaseExists) {
     Write-Host "Release $RELEASE_TAG already exists. Uploading as asset..." -ForegroundColor Yellow
     gh release upload $RELEASE_TAG $APK_PATH --repo $REPO --clobber
 } else {
-    gh release create $RELEASE_TAG $APK_PATH --title "MyMusic $RELEASE_TAG" --notes "Automated release version $RELEASE_TAG" --repo $REPO
+    gh release create $RELEASE_TAG $APK_PATH --title "BetterNCM-Android $RELEASE_TAG" --notes "Automated release version $RELEASE_TAG" --repo $REPO
 }
 
 Write-Host "Successfully released and uploaded to GitHub!" -ForegroundColor Green
