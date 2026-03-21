@@ -34,6 +34,7 @@ test.kt
 
 # Excluded by request
 .vscode/
+.idea/
 logo.png
 *.ps1
 MEMORY_BNA.md
