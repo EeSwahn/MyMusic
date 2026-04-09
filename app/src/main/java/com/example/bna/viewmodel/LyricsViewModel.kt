@@ -47,33 +47,42 @@ class LyricsViewModel : ViewModel() {
             when (val result = repository.getLyric(songId)) {
                 is Result.Success -> {
                     val yrcText   = result.data.yrc?.lyric?.trim() ?: ""
+                    val lrcText   = result.data.lrc?.lyric?.trim() ?: ""
                     val transText = result.data.tlyric?.lyric ?: ""
 
-                    if (yrcText.isBlank()) {
-                        _state.value = LyricsUiState(
-                            hasNoLyric = true,
-                            lyricErrorMessage = "该歌曲没有 YRC 逐字歌词，已停止加载。"
-                        )
-                        return@launch
+                    var parsedLyrics: List<LyricLine>? = null
+
+                    if (yrcText.isNotBlank()) {
+                        try {
+                            val lines = parseYrc(yrcText, transText)
+                            val validLines = lines.filter { it.text.isNotBlank() }
+                            val timedLineCount = validLines.count { !it.words.isNullOrEmpty() }
+                            if (validLines.isNotEmpty() && timedLineCount > 0) {
+                                parsedLyrics = validLines
+                            }
+                        } catch (e: Exception) {
+                            // YRC parsing failed, will fallback to LRC
+                        }
                     }
 
-                    try {
-                        val lines = parseYrc(yrcText, transText)
-                        val validLines = lines.filter { it.text.isNotBlank() }
-                        val timedLineCount = validLines.count { !it.words.isNullOrEmpty() }
-
-                        if (validLines.isEmpty() || timedLineCount == 0) {
-                            _state.value = LyricsUiState(
-                                hasNoLyric = true,
-                                lyricErrorMessage = "YRC 解析失败：未解析出逐字时间数据。"
-                            )
-                        } else {
-                            _state.value = LyricsUiState(lyrics = validLines)
+                    if (parsedLyrics == null && lrcText.isNotBlank()) {
+                        try {
+                            val lines = parseLrc(lrcText, transText)
+                            val validLines = lines.filter { it.text.isNotBlank() }
+                            if (validLines.isNotEmpty()) {
+                                parsedLyrics = validLines
+                            }
+                        } catch (e: Exception) {
+                            // LRC parsing failed
                         }
-                    } catch (e: Exception) {
+                    }
+
+                    if (parsedLyrics != null) {
+                        _state.value = LyricsUiState(lyrics = parsedLyrics)
+                    } else {
                         _state.value = LyricsUiState(
                             hasNoLyric = true,
-                            lyricErrorMessage = "YRC 解析异常：${e.message ?: "未知错误"}"
+                            lyricErrorMessage = "该歌曲暂无歌词或支持的格式。"
                         )
                     }
                 }

@@ -357,10 +357,14 @@ class MusicRepository {
                 // 使用 EAPI 并模拟 Android 身份以获取 YRC (逐字) 歌词
                 val data = mapOf(
                     "id" to songId.toString(),
-                    "lv" to -1,
-                    "kv" to -1,
+                    "cp" to false,
                     "tv" to -1,
-                    "yrc" to true // 显式请求逐字歌词
+                    "lv" to -1,
+                    "rv" to -1,
+                    "kv" to -1,
+                    "yv" to -1,
+                    "ytv" to -1,
+                    "yrv" to -1
                 )
                 val jsonStr = gson.toJson(data)
                 val params = NeteaseCrypto.encryptEapi(
